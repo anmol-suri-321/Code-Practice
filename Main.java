@@ -20,14 +20,7 @@ class TreeNode {
 
 public class Main {
     public static void main(String[] args) {
-        OSFactory osFactory = new OSFactory();
-        OS os1 = osFactory.getInstance("open");
-        os1.spec();
-
-        OS os2 = osFactory.getInstance("closed");
-        os2.spec();
-
-        OS os3 = osFactory.getInstance("hello world");
-        os3.spec();
+        PermutationInString obj = new PermutationInString();
+        obj.checkInclusion("ab", "eidbaooo");
     }
 }
