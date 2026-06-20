@@ -1,3 +1,5 @@
+package DSA.NextGreaterElement;
+
 import java.util.Stack;
 
 public class DailyTemperaturesNextGreaterElement {

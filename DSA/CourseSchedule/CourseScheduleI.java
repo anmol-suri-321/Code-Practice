@@ -1,3 +1,5 @@
+package DSA.CourseSchedule;
+
 import java.util.ArrayList;
 import java.util.List;
 

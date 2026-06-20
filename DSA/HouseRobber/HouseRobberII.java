@@ -1,3 +1,5 @@
+package DSA.HouseRobber;
+
 public class HouseRobberII {
     public int rob(int[] nums) {
         //We will solve this problem without usinf extra space DP array

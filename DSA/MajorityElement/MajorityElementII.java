@@ -1,3 +1,5 @@
+package DSA.MajorityElement;
+
 import java.util.ArrayList;
 import java.util.List;
 

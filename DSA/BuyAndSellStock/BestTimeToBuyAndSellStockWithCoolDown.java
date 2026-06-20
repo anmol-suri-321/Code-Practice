@@ -1,3 +1,5 @@
+package DSA.BuyAndSellStock;
+
 public class BestTimeToBuyAndSellStockWithCoolDown {
     public int maxProfit(int[] prices) {
         int n = prices.length;

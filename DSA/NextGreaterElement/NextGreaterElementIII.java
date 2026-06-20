@@ -1,3 +1,5 @@
+package DSA.NextGreaterElement;
+
 import java.util.Arrays;
 
 public class NextGreaterElementIII {

@@ -1,3 +1,5 @@
+package DSA.JumpGame;
+
 public class JumpGame {
     public boolean canJump(int[] nums) {
         int n = nums.length;

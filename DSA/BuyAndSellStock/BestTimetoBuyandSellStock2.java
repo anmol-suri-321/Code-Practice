@@ -1,3 +1,5 @@
+package DSA.BuyAndSellStock;
+
 
 public class BestTimetoBuyandSellStock2 {
     public int maxProfit(int[] prices) {

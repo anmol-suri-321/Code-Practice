@@ -1,3 +1,5 @@
+package DSA.HouseRobber;
+
 public class HouseRobberIV {
     public int minCapability(int[] nums, int k) {
         int low = Integer.MAX_VALUE;

@@ -1,3 +1,5 @@
+package DSA.MajorityElement;
+
 public class MajorityElement {
     // Boyer-Moore Voting Algorithm
     public int majorityElement(int[] nums) {

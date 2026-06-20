@@ -1,3 +1,5 @@
+package DSA.HouseRobber;
+
 public class HouseRobberI {
     public int rob(int[] nums) {
         int n = nums.length;
