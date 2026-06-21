@@ -59,4 +59,8 @@ public class Ticket {
     public void assignTicket(User user) {
         this.user = user;
     }
+
+    public User getUser() {
+        return user;
+    }
 }
