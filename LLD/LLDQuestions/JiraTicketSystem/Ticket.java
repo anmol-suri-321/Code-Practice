@@ -6,6 +6,7 @@ public class Ticket {
     String description;
     TicketStatus ticketStatus;
     Priority priority;
+    User user;
 
     public Ticket(String id, String name, String description, TicketStatus ticketStatus, Priority priority) {
         this.id = id;
@@ -53,5 +54,9 @@ public class Ticket {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public void assignTicket(User user) {
+        this.user = user;
     }
 }
