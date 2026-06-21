@@ -35,4 +35,8 @@ public class User {
     void removeTicket(Ticket ticket) {
         assignedTickets.remove(ticket);
     }
+
+    public List<Ticket> getAssignedTickets() {
+        return assignedTickets;
+    }
 }
