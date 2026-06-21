@@ -1,3 +1,5 @@
+package DSA;
+
 public class ValidPalindrome {
     public boolean isPalindrome(String s) {
         String s_lower = s.toLowerCase();

@@ -1,3 +1,5 @@
+package DSA;
+
 
 public class TrappingRainWater {
     public int trap(int[] height) {

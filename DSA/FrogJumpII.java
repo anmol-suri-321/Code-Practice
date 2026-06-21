@@ -1,3 +1,5 @@
+package DSA;
+
 
 public class FrogJumpII {
     public int maxJump(int[] stones) {

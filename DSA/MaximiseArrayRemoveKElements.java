@@ -1,3 +1,5 @@
+package DSA;
+
 public class MaximiseArrayRemoveKElements {
     public int maximumTop(int[] nums, int k) {
         // If there's only one element in the array

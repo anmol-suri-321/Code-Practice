@@ -1,3 +1,5 @@
+package DSA;
+
 public class PermutationInString {
     public boolean checkInclusion(String s1, String s2) {
         int[] hash1 = new int[26];

@@ -1,3 +1,5 @@
+package DSA;
+
 public class LongestSubarrayOf1sAfterDeletingOneElement {
     public int longestSubarray(int[] nums) {
         int count = 0;

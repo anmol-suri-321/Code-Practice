@@ -1,3 +1,5 @@
+package DSA;
+
 public class CountGoodNodesBinaryTree {
     public int goodNodes(TreeNode root) {
         return preOrderTraversal(root, Integer.MIN_VALUE);

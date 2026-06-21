@@ -1,3 +1,5 @@
+package DSA;
+
 public class GuessNumberHigherOrLower {
     public int guessNumber(int n) {
         int l = 1, r = n;

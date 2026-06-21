@@ -1,3 +1,5 @@
+package DSA;
+
 public class CountWaysPlaceHouses {
     private static final int MOD = 1000000007;
     public int countHousePlacements(int n) {

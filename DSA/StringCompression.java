@@ -1,3 +1,5 @@
+package DSA;
+
 public class StringCompression {
     public int compress(char[] chars) {
         int n = chars.length;

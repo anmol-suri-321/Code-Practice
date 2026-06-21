@@ -1,3 +1,5 @@
+package DSA;
+
 public class FindMiddleIndexinArray {
     public int findMiddleIndex(int[] nums) {
         int totalSum = 0;

@@ -1,3 +1,5 @@
+package DSA;
+
 public class MinimumFlipsToMakeAorBEqualToC {
 // In this problem, learn how to extract the bit at ith index in 32 bit integer and traverse
     public int minFlips(int a, int b, int c) {

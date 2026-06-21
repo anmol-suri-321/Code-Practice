@@ -1,3 +1,5 @@
+package DSA;
+
 public class FindtheHighestAltitude {
     public int largestAltitude(int[] gain) {
         int prefixSum = 0;

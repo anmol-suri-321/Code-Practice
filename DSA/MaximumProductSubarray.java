@@ -1,3 +1,5 @@
+package DSA;
+
 public class MaximumProductSubarray {
     public int maxProduct(int[] nums) {
         int n = nums.length;

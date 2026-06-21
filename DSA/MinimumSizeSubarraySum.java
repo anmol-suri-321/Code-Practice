@@ -1,3 +1,5 @@
+package DSA;
+
 public class MinimumSizeSubarraySum {
     public int minSubArrayLen(int target, int[] nums) {
         int n = nums.length;

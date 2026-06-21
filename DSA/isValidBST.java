@@ -1,3 +1,5 @@
+package DSA;
+
 public class isValidBST {
     public boolean isValidBSTQ(TreeNode root) {
         return isBST(root, Integer.MIN_VALUE, Integer.MAX_VALUE);

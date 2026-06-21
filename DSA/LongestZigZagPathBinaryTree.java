@@ -1,3 +1,5 @@
+package DSA;
+
 public class LongestZigZagPathBinaryTree {
     int maxLength = 0;
     public int longestZigZag(TreeNode root) {

@@ -1,3 +1,5 @@
+package DSA;
+
 public class MaxPointsOnALine {
     public int maxPoints(int[][] p) {
         int n = p.length;

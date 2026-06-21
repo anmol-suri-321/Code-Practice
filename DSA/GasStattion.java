@@ -1,3 +1,5 @@
+package DSA;
+
 public class GasStattion {
     public int canCompleteCircuit(int[] gas, int[] cost) {
         int totalGas = 0; // Total gas available
