@@ -1,6 +1,10 @@
-package LLD.LLDQuestions.JiraTicketSystem;
+package LLD.LLDQuestions.JiraTicketSystem.Ticket;
 
-public class Ticket {
+import LLD.LLDQuestions.JiraTicketSystem.Priority;
+import LLD.LLDQuestions.JiraTicketSystem.TicketStatus;
+import LLD.LLDQuestions.JiraTicketSystem.User;
+
+public abstract class Ticket {
     String id;
     String name;
     String description;
@@ -8,7 +12,7 @@ public class Ticket {
     Priority priority;
     User user;
 
-    public Ticket(String id, String name, String description, TicketStatus ticketStatus, Priority priority) {
+    protected Ticket(String id, String name, String description, TicketStatus ticketStatus, Priority priority) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -63,4 +67,6 @@ public class Ticket {
     public User getUser() {
         return user;
     }
+
+    public abstract TicketType getTicketType();
 }

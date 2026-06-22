@@ -3,6 +3,7 @@ package LLD.LLDQuestions.JiraTicketSystem;
 import LLD.LLDQuestions.JiraTicketSystem.Notifications.EmailNotificationSender;
 import LLD.LLDQuestions.JiraTicketSystem.Notifications.NotificationService;
 import LLD.LLDQuestions.JiraTicketSystem.Notifications.WhatsappNotificationSender;
+import LLD.LLDQuestions.JiraTicketSystem.Ticket.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -17,13 +18,11 @@ public class Main {
         User user1 = new User("1", "Anmol Suri", "anmolsuri1@gmail.com", "12345");
         User user2 = new User("2", "Anmol Suri 2", "asuri2@gmail.com", "23456");
 
-        Ticket ticket1 = new Ticket("1", "Ticket 1", "Description for ticket 1", TicketStatus.OPEN, Priority.HIGH);
-        Ticket ticket2 = new Ticket("2", "Ticket 2", "Description for ticket 2", TicketStatus.OPEN, Priority.MEDIUM);
-        Ticket ticket3 = new Ticket("3", "Ticket 3", "Description for ticket 3", TicketStatus.OPEN, Priority.LOW);
+        Ticket ticket1 = new BugTicket("1", "Ticket 1", "Description for ticket 1", TicketStatus.OPEN, Priority.HIGH, BugSeverity.CRITICAL);
+        Ticket ticket2 = new StoryTicket("2", "Ticket 2", "Description for ticket 2", TicketStatus.OPEN, Priority.MEDIUM, TshirtSize.XL);
 
         ticketService.assignTicketToUser(ticket1, user1);
         ticketService.assignTicketToUser(ticket2, user1);
-        ticketService.assignTicketToUser(ticket3, user2);
         ticketService.updateTicketStatus(ticket1, TicketStatus.IN_PROGRESS);
         ticketService.updateTicketStatus(ticket1, TicketStatus.CLOSED);
 
@@ -31,6 +30,5 @@ public class Main {
                 forEach(ticket -> System.out.println("User 1 Ticket: " + ticket.getName() + " - " + ticket.getTicketStatus()));
         ticketService.getTicketsForUser(user2).
                 forEach(ticket -> System.out.println("User 2 Ticket: " + ticket.getName() + " - " + ticket.getTicketStatus()));
-
     }
 }

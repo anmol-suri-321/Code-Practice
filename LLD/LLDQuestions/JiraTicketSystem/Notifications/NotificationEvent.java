@@ -1,6 +1,6 @@
 package LLD.LLDQuestions.JiraTicketSystem.Notifications;
 
-import LLD.LLDQuestions.JiraTicketSystem.Ticket;
+import LLD.LLDQuestions.JiraTicketSystem.Ticket.Ticket;
 import LLD.LLDQuestions.JiraTicketSystem.User;
 
 public class NotificationEvent {

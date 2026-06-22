@@ -3,6 +3,7 @@ package LLD.LLDQuestions.JiraTicketSystem;
 import LLD.LLDQuestions.JiraTicketSystem.Notifications.NotificationEvent;
 import LLD.LLDQuestions.JiraTicketSystem.Notifications.NotificationEventType;
 import LLD.LLDQuestions.JiraTicketSystem.Notifications.NotificationService;
+import LLD.LLDQuestions.JiraTicketSystem.Ticket.Ticket;
 
 import java.util.List;
 

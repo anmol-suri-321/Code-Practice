@@ -1,5 +1,7 @@
 package LLD.LLDQuestions.JiraTicketSystem;
 
+import LLD.LLDQuestions.JiraTicketSystem.Ticket.Ticket;
+
 import java.util.ArrayList;
 import java.util.List;
 
