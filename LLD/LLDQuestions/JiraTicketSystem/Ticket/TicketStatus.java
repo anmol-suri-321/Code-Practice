@@ -1,4 +1,4 @@
-package LLD.LLDQuestions.JiraTicketSystem;
+package LLD.LLDQuestions.JiraTicketSystem.Ticket;
 
 public enum TicketStatus {
     OPEN,

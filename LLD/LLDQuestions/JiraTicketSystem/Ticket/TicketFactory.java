@@ -1,7 +1,6 @@
 package LLD.LLDQuestions.JiraTicketSystem.Ticket;
 
 import LLD.LLDQuestions.JiraTicketSystem.Priority;
-import LLD.LLDQuestions.JiraTicketSystem.TicketStatus;
 
 public class TicketFactory {
 

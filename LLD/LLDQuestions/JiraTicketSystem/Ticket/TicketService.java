@@ -1,9 +1,9 @@
-package LLD.LLDQuestions.JiraTicketSystem;
+package LLD.LLDQuestions.JiraTicketSystem.Ticket;
 
 import LLD.LLDQuestions.JiraTicketSystem.Notifications.NotificationEvent;
 import LLD.LLDQuestions.JiraTicketSystem.Notifications.NotificationEventType;
 import LLD.LLDQuestions.JiraTicketSystem.Notifications.NotificationService;
-import LLD.LLDQuestions.JiraTicketSystem.Ticket.Ticket;
+import LLD.LLDQuestions.JiraTicketSystem.User;
 
 import java.util.List;
 

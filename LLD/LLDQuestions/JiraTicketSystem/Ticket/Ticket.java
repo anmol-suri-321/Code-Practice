@@ -1,8 +1,11 @@
 package LLD.LLDQuestions.JiraTicketSystem.Ticket;
 
+import LLD.LLDQuestions.JiraTicketSystem.Comment.Comment;
 import LLD.LLDQuestions.JiraTicketSystem.Priority;
-import LLD.LLDQuestions.JiraTicketSystem.TicketStatus;
 import LLD.LLDQuestions.JiraTicketSystem.User;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class Ticket {
     String id;
@@ -11,6 +14,7 @@ public abstract class Ticket {
     TicketStatus ticketStatus;
     Priority priority;
     User user;
+    List<Comment> comments;
 
     protected Ticket(String id, String name, String description, TicketStatus ticketStatus, Priority priority) {
         this.id = id;
@@ -18,6 +22,7 @@ public abstract class Ticket {
         this.description = description;
         this.ticketStatus = ticketStatus;
         this.priority = priority;
+        this.comments = new ArrayList<>();
     }
 
     public Priority getPriority() {
@@ -66,6 +71,14 @@ public abstract class Ticket {
 
     public User getUser() {
         return user;
+    }
+
+    public List<Comment> getComments() {
+        return comments;
+    }
+
+    public void addComment(Comment comment) {
+        comments.add(comment);
     }
 
     public abstract TicketType getTicketType();
