@@ -18,8 +18,10 @@ public class Main {
         User user1 = new User("1", "Anmol Suri", "anmolsuri1@gmail.com", "12345");
         User user2 = new User("2", "Anmol Suri 2", "asuri2@gmail.com", "23456");
 
-        Ticket ticket1 = new BugTicket("1", "Ticket 1", "Description for ticket 1", TicketStatus.OPEN, Priority.HIGH, BugSeverity.CRITICAL);
-        Ticket ticket2 = new StoryTicket("2", "Ticket 2", "Description for ticket 2", TicketStatus.OPEN, Priority.MEDIUM, TshirtSize.XL);
+        TicketRequest ticketRequest = new TicketRequest("1", "Ticket 1", "Description for ticket 1", Priority.HIGH, TicketType.BUG, BugSeverity.CRITICAL);
+        Ticket ticket1 = TicketFactory.createTicket(ticketRequest);
+        TicketRequest ticketRequest1 = new TicketRequest("2", "Ticket 2", "Description for ticket 2", Priority.MEDIUM, TicketType.STORY, TshirtSize.XL);
+        Ticket ticket2 = TicketFactory.createTicket(ticketRequest1);
 
         ticketService.assignTicketToUser(ticket1, user1);
         ticketService.assignTicketToUser(ticket2, user1);
