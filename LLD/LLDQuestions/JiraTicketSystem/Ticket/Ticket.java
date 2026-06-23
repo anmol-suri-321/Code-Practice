@@ -15,7 +15,6 @@ public abstract class Ticket {
     Priority priority;
     User user;
     List<Comment> comments;
-    TicketState currentState;
 
     protected Ticket(String id, String name, String description, TicketStatus ticketStatus, Priority priority) {
         this.id = id;
@@ -24,7 +23,6 @@ public abstract class Ticket {
         this.ticketStatus = ticketStatus;
         this.priority = priority;
         this.comments = new ArrayList<>();
-        this.currentState = new OpenTicketState();
     }
 
     public Priority getPriority() {
@@ -81,14 +79,6 @@ public abstract class Ticket {
 
     public void addComment(Comment comment) {
         comments.add(comment);
-    }
-
-    public void setCurrentState(TicketStatus status) {
-        switch(status) {
-            case OPEN -> this.currentState = new OpenTicketState();
-            case IN_PROGRESS -> this.currentState = new InProgressTicketState();
-            case CLOSED -> this.currentState = new ClosedTicketState();
-        }
     }
 
     public abstract TicketType getTicketType();

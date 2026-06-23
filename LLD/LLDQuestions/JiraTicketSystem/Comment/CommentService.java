@@ -13,7 +13,7 @@ public class CommentService {
         this.notificationService = notificationService;
     }
 
-    public void addComment(Ticket ticket, Comment comment) {
+    void addComment(Ticket ticket, Comment comment) {
         User user = ticket.getUser();
         ticket.addComment(comment);
         notificationService.notify(
