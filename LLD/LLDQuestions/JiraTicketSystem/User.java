@@ -36,7 +36,7 @@ public class User {
         return phoneNumber;
     }
 
-    void assignTicket(Ticket ticket) {
+    public void assignTicket(Ticket ticket) {
         assignedTickets.add(ticket);
     }
 
