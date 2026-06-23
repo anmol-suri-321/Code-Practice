@@ -204,6 +204,93 @@ Adding `SlackNotificationSender` requires zero changes to existing classes — j
 
 ---
 
+## API Design
+
+### How APIs Were Designed
+
+#### Rule 1 — URLs are nouns (resources), not verbs
+```
+✗ /createTicket
+✗ /getTicketById
+✓ /tickets
+✓ /tickets/{id}
+```
+
+#### Rule 2 — HTTP method carries the verb
+
+| Method | When to use | Example |
+|---|---|---|
+| GET | Read data, no side effects | `GET /tickets/{id}` |
+| POST | Create new resource | `POST /tickets` |
+| PUT | Update existing resource (full) | `PUT /tickets/{id}/status` |
+| PATCH | Partial update (one field) | `PATCH /tickets/{id}` |
+| DELETE | Remove resource | `DELETE /tickets/{id}` |
+
+Decision rule:
+- Am I reading? → GET
+- Am I creating new? → POST
+- Am I updating whole resource? → PUT
+- Am I updating one field? → PATCH
+- Am I deleting? → DELETE
+
+#### Rule 3 — Nested resources for relationships
+```
+/tickets/{id}/comments    ← comments belong to a ticket
+/users/{id}/tickets       ← tickets belonging to a user
+```
+
+#### Rule 4 — HTTP Status codes
+
+| Code | Meaning | When |
+|---|---|---|
+| 200 | OK | Successful GET, PUT |
+| 201 | Created | Successful POST |
+| 400 | Bad Request | Invalid input (null name) |
+| 404 | Not Found | Ticket/User doesn't exist |
+| 409 | Conflict | Invalid state transition (CLOSED→CLOSED) |
+| 500 | Server Error | Unexpected failure |
+
+#### Rule 5 — Versioning
+```
+/api/v1/tickets
+/api/v2/tickets
+```
+Lets old clients use v1 while new clients use v2 — no breaking changes.
+
+#### Rule 6 — Pagination for list endpoints
+```
+GET /users/{id}/tickets?page=0&size=20
+```
+Never return unlimited list — wraps response in:
+```json
+{
+  "data": [...],
+  "page": 0,
+  "size": 20,
+  "totalCount": 10000
+}
+```
+
+---
+
+### API Endpoints
+
+```
+POST   /api/v1/tickets                    201 Created     → create ticket
+GET    /api/v1/tickets/{id}               200 / 404       → get ticket by id
+PUT    /api/v1/tickets/{id}/assign        200 / 404       → assign ticket to user
+PUT    /api/v1/tickets/{id}/status        200 / 404 / 409 → update status
+POST   /api/v1/tickets/{id}/comments      201 / 404       → add comment
+GET    /api/v1/tickets/{id}/comments      200 / 404       → get all comments
+GET    /api/v1/users/{id}/tickets         200 / 404       → get user's tickets (paginated)
+POST   /api/v1/users                      201 Created     → create user
+```
+
+### Why assign and status are PUT not POST?
+Ticket already exists — we're updating it, not creating new. POST creates new resources, PUT updates existing ones.
+
+---
+
 ## Sample Output
 
 ```
