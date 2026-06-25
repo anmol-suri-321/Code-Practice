@@ -7,6 +7,10 @@ import LLD.LLDQuestions.JiraTicketSystem.Notifications.NotificationService;
 import LLD.LLDQuestions.JiraTicketSystem.Notifications.WhatsappNotificationSender;
 import LLD.LLDQuestions.JiraTicketSystem.Ticket.*;
 import LLD.LLDQuestions.JiraTicketSystem.cache.IdempotencyStore;
+import LLD.LLDQuestions.JiraTicketSystem.repository.InMemoryTicketRepository;
+import LLD.LLDQuestions.JiraTicketSystem.repository.TicketRepository;
+
+import java.util.Optional;
 
 public class Main {
     public static void main(String[] args) {
@@ -14,9 +18,13 @@ public class Main {
         NotificationService notificationService = new NotificationService();
         IdempotencyStore<Ticket> ticketIdempotencyStore = new IdempotencyStore<>();
 
-        TicketService ticketService = new TicketService(notificationService, ticketIdempotencyStore);
+        TicketRepository ticketRepository = new InMemoryTicketRepository();
+
+        TicketService ticketService = new TicketService(notificationService, ticketIdempotencyStore, ticketRepository);
         notificationService.addNotificationSender(new EmailNotificationSender());
         notificationService.addNotificationSender(new WhatsappNotificationSender());
+
+        testInMemoryTicketRepository(ticketService);
 
 //        testIdempotencyForCreateTicket(ticketService);
         testIdempotencyForAssignTicket(ticketService);
@@ -49,6 +57,15 @@ public class Main {
 //                forEach(ticket -> System.out.println("User 1 Ticket: " + ticket.getName() + " - " + ticket.getTicketStatus()));
 //        ticketService.getTicketsForUser(user2).
 //                forEach(ticket -> System.out.println("User 2 Ticket: " + ticket.getName() + " - " + ticket.getTicketStatus()));
+    }
+
+    private static void testInMemoryTicketRepository(TicketService ticketService) {
+        TicketRequest ticketRequest = new TicketRequest("1", "Login crash", "NPE on login", Priority.HIGH, TicketType.BUG, BugSeverity.CRITICAL);
+        Ticket ticket = ticketService.createTicket(ticketRequest, "repo-test-key-1");
+
+        Optional<Ticket> retrievedTicket = ticketService.findById("1");
+        Ticket t = retrievedTicket.orElseThrow(() -> new RuntimeException("Ticket not found"));
+        System.out.println("Retrieved Ticket: " + t.getName() + " - " + t.getDescription());
     }
 
     private static void testIdempotencyForAssignTicket(TicketService ticketService) {
