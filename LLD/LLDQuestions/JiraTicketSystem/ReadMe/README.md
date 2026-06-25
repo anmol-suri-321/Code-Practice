@@ -204,6 +204,165 @@ Adding `SlackNotificationSender` requires zero changes to existing classes — j
 
 ---
 
+## API Design
+
+### How APIs Were Designed
+
+#### Rule 1 — URLs are nouns (resources), not verbs
+```
+✗ /createTicket
+✗ /getTicketById
+✓ /tickets
+✓ /tickets/{id}
+```
+
+#### Rule 2 — HTTP method carries the verb
+
+| Method | When to use | Example |
+|---|---|---|
+| GET | Read data, no side effects | `GET /tickets/{id}` |
+| POST | Create new resource | `POST /tickets` |
+| PUT | Update existing resource (full) | `PUT /tickets/{id}/status` |
+| PATCH | Partial update (one field) | `PATCH /tickets/{id}` |
+| DELETE | Remove resource | `DELETE /tickets/{id}` |
+
+Decision rule:
+- Am I reading? → GET
+- Am I creating new? → POST
+- Am I updating whole resource? → PUT
+- Am I updating one field? → PATCH
+- Am I deleting? → DELETE
+
+#### Rule 3 — Nested resources for relationships
+```
+/tickets/{id}/comments    ← comments belong to a ticket
+/users/{id}/tickets       ← tickets belonging to a user
+```
+
+#### Rule 4 — HTTP Status codes
+
+| Code | Meaning | When |
+|---|---|---|
+| 200 | OK | Successful GET, PUT |
+| 201 | Created | Successful POST |
+| 400 | Bad Request | Invalid input (null name) |
+| 404 | Not Found | Ticket/User doesn't exist |
+| 409 | Conflict | Invalid state transition (CLOSED→CLOSED) |
+| 500 | Server Error | Unexpected failure |
+
+#### Rule 5 — Versioning
+```
+/api/v1/tickets
+/api/v2/tickets
+```
+Lets old clients use v1 while new clients use v2 — no breaking changes.
+
+#### Rule 6 — Pagination for list endpoints
+```
+GET /users/{id}/tickets?page=0&size=20
+```
+Never return unlimited list — wraps response in:
+```json
+{
+  "data": [...],
+  "page": 0,
+  "size": 20,
+  "totalCount": 10000
+}
+```
+
+---
+
+### API Endpoints
+
+```
+POST   /api/v1/tickets                    201 Created     → create ticket
+GET    /api/v1/tickets/{id}               200 / 404       → get ticket by id
+PUT    /api/v1/tickets/{id}/assign        200 / 404       → assign ticket to user
+PUT    /api/v1/tickets/{id}/status        200 / 404 / 409 → update status
+POST   /api/v1/tickets/{id}/comments      201 / 404       → add comment
+GET    /api/v1/tickets/{id}/comments      200 / 404       → get all comments
+GET    /api/v1/users/{id}/tickets         200 / 404       → get user's tickets (paginated)
+POST   /api/v1/users                      201 Created     → create user
+```
+
+### Why assign and status are PUT not POST?
+Ticket already exists — we're updating it, not creating new. POST creates new resources, PUT updates existing ones.
+
+---
+
+## Idempotency
+
+### Problem
+Client calls `POST /tickets` — network drops — client retries — two identical tickets created.
+
+### Solution
+Client sends a unique `idempotencyKey` with each request. Server stores key → result mapping. If same key seen again, return cached result without re-executing.
+
+### Implementation
+```
+IdempotencyStore<T>         ← generic cache (ConcurrentHashMap)
+TicketService.createTicket  ← checks key before creating, saves after
+TicketService.assignTicket  ← checks key before assigning, saves after
+```
+
+### Flow
+```
+First call  (key=abc123) → not in store → execute → save → return ticket
+Second call (key=abc123) → found in store → return cached ticket, skip execution
+```
+
+### Key design decisions
+- `IdempotencyStore<T>` is generic — works for tickets, users, any resource
+- One store shared across operations — different key namespaces separate them
+  - `create-ticket-{uuid}` → create operations
+  - `assign-{ticketId}-{userId}` → assign operations
+- In production: Redis with TTL (24 hours) instead of in-memory map
+
+---
+
+## Concurrency
+
+### Problem
+Two managers assign same ticket simultaneously:
+```
+Thread A: reads ticket.user = null → assigns user1
+Thread B: reads ticket.user = null → assigns user2
+Both write → last one wins, first assignment silently lost
+```
+
+### Solution — Optimistic Locking
+`Ticket` holds `AtomicInteger version = 0`. Before any mutation:
+1. Read current version
+2. Attempt `compareAndSet(currentVersion, currentVersion + 1)`
+3. If fails → another thread already modified → throw `RuntimeException`
+4. If succeeds → proceed with mutation
+
+### Why AtomicInteger not int?
+`int` version with `++` is not thread-safe — two threads can both read version=3 and both increment to 4. `AtomicInteger.compareAndSet` is atomic — only one thread wins.
+
+### Why compareAndSet not incrementAndGet?
+`incrementAndGet` always succeeds — no conflict detection. `compareAndSet(expected, new)` only succeeds if current value matches expected — detects when another thread already changed it.
+
+### Validate before claiming version
+```
+1. Validate business rules (OPEN → CLOSED not allowed)
+2. compareAndSet to claim version
+3. Mutate ticket
+4. Fire notification
+```
+If validation fails after version claimed → version incremented but ticket unchanged → inconsistent state. Always validate first.
+
+### When to use what
+| Scenario | Approach |
+|---|---|
+| Low contention (rare conflicts) | Optimistic locking (this system) |
+| High contention (frequent conflicts) | Pessimistic locking (DB row lock) |
+| Single server | `synchronized` method |
+| Multiple servers | Optimistic or Pessimistic |
+
+---
+
 ## Sample Output
 
 ```

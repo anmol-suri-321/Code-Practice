@@ -1,5 +1,7 @@
 package LLD.LLDQuestions.JiraTicketSystem;
 
+import LLD.LLDQuestions.JiraTicketSystem.Ticket.Ticket;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,7 +36,7 @@ public class User {
         return phoneNumber;
     }
 
-    void assignTicket(Ticket ticket) {
+    public void assignTicket(Ticket ticket) {
         assignedTickets.add(ticket);
     }
 
