@@ -291,6 +291,78 @@ Ticket already exists — we're updating it, not creating new. POST creates new 
 
 ---
 
+## Idempotency
+
+### Problem
+Client calls `POST /tickets` — network drops — client retries — two identical tickets created.
+
+### Solution
+Client sends a unique `idempotencyKey` with each request. Server stores key → result mapping. If same key seen again, return cached result without re-executing.
+
+### Implementation
+```
+IdempotencyStore<T>         ← generic cache (ConcurrentHashMap)
+TicketService.createTicket  ← checks key before creating, saves after
+TicketService.assignTicket  ← checks key before assigning, saves after
+```
+
+### Flow
+```
+First call  (key=abc123) → not in store → execute → save → return ticket
+Second call (key=abc123) → found in store → return cached ticket, skip execution
+```
+
+### Key design decisions
+- `IdempotencyStore<T>` is generic — works for tickets, users, any resource
+- One store shared across operations — different key namespaces separate them
+  - `create-ticket-{uuid}` → create operations
+  - `assign-{ticketId}-{userId}` → assign operations
+- In production: Redis with TTL (24 hours) instead of in-memory map
+
+---
+
+## Concurrency
+
+### Problem
+Two managers assign same ticket simultaneously:
+```
+Thread A: reads ticket.user = null → assigns user1
+Thread B: reads ticket.user = null → assigns user2
+Both write → last one wins, first assignment silently lost
+```
+
+### Solution — Optimistic Locking
+`Ticket` holds `AtomicInteger version = 0`. Before any mutation:
+1. Read current version
+2. Attempt `compareAndSet(currentVersion, currentVersion + 1)`
+3. If fails → another thread already modified → throw `RuntimeException`
+4. If succeeds → proceed with mutation
+
+### Why AtomicInteger not int?
+`int` version with `++` is not thread-safe — two threads can both read version=3 and both increment to 4. `AtomicInteger.compareAndSet` is atomic — only one thread wins.
+
+### Why compareAndSet not incrementAndGet?
+`incrementAndGet` always succeeds — no conflict detection. `compareAndSet(expected, new)` only succeeds if current value matches expected — detects when another thread already changed it.
+
+### Validate before claiming version
+```
+1. Validate business rules (OPEN → CLOSED not allowed)
+2. compareAndSet to claim version
+3. Mutate ticket
+4. Fire notification
+```
+If validation fails after version claimed → version incremented but ticket unchanged → inconsistent state. Always validate first.
+
+### When to use what
+| Scenario | Approach |
+|---|---|
+| Low contention (rare conflicts) | Optimistic locking (this system) |
+| High contention (frequent conflicts) | Pessimistic locking (DB row lock) |
+| Single server | `synchronized` method |
+| Multiple servers | Optimistic or Pessimistic |
+
+---
+
 ## Sample Output
 
 ```
