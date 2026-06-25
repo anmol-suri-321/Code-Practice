@@ -15,6 +15,16 @@ public class TicketService {
     }
 
     public void assignTicketToUser(Ticket ticket, User user) {
+        int currentVersion = ticket.getVersion();
+//        try {
+//            Thread.sleep(10);
+//        } catch (InterruptedException e) {
+//            throw new RuntimeException(e);
+//        }
+        if (ticket.compareAndIncrementVersion(currentVersion)) {
+            throw new RuntimeException("Concurrent modification detected on ticket: " + ticket.getId());
+        }
+
         ticket.assignTicket(user);
         user.assignTicket(ticket);
 
@@ -31,10 +41,16 @@ public class TicketService {
     }
 
     public void updateTicketStatus(Ticket ticket, TicketStatus newStatus) {
+        int currentVersion = ticket.getVersion();
+
         TicketStatus currentStatus = ticket.getTicketStatus();
         // A ticket can't be closed if It's not yet in progress
         if(currentStatus.equals(TicketStatus.OPEN) && newStatus.equals(TicketStatus.CLOSED)) {
                 throw new IllegalArgumentException("A ticket can't be closed if It's not yet in progress");
+        }
+
+        if (ticket.compareAndIncrementVersion(currentVersion)) {
+            throw new RuntimeException("Concurrent modification detected on ticket: " + ticket.getId());
         }
 
         ticket.setTicketStatus(newStatus);

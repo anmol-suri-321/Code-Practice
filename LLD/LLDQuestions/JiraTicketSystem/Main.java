@@ -26,17 +26,55 @@ public class Main {
         TicketRequest ticketRequest1 = new TicketRequest("2", "Ticket 2", "Description for ticket 2", Priority.MEDIUM, TicketType.STORY, TshirtSize.XL);
         Ticket ticket2 = TicketFactory.createTicket(ticketRequest1);
 
-        ticketService.assignTicketToUser(ticket1, user1);
-        ticketService.assignTicketToUser(ticket2, user1);
-        ticketService.updateTicketStatus(ticket1, TicketStatus.IN_PROGRESS);
-        ticketService.updateTicketStatus(ticket1, TicketStatus.CLOSED);
+//        ticketService.assignTicketToUser(ticket1, user1);
+//        ticketService.assignTicketToUser(ticket2, user1);
+//        ticketService.updateTicketStatus(ticket1, TicketStatus.IN_PROGRESS);
+//        ticketService.updateTicketStatus(ticket1, TicketStatus.CLOSED);
+        try {
+            testConcurrencyOnAssignTicket(ticketService, user1, user2);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
-        commentService.addComment(ticket1, new Comment("1", "today", user2, "This is a comment for ticket 1"));
-        commentService.addComment(ticket2, new Comment("2", "yesterday", user1, "This is a comment for ticket 1"));
+//        commentService.addComment(ticket1, new Comment("1", "today", user2, "This is a comment for ticket 1"));
+//        commentService.addComment(ticket2, new Comment("2", "yesterday", user1, "This is a comment for ticket 1"));
 
         ticketService.getTicketsForUser(user1).
                 forEach(ticket -> System.out.println("User 1 Ticket: " + ticket.getName() + " - " + ticket.getTicketStatus()));
         ticketService.getTicketsForUser(user2).
                 forEach(ticket -> System.out.println("User 2 Ticket: " + ticket.getName() + " - " + ticket.getTicketStatus()));
+    }
+
+    static void testConcurrencyOnAssignTicket(TicketService ticketService, User user1, User user2) throws InterruptedException {
+        // Simulate concurrent modification
+        Ticket ticket1 = TicketFactory.createTicket(
+                new TicketRequest("1", "Login crash", "NPE on login", Priority.HIGH, TicketType.BUG, BugSeverity.CRITICAL)
+        );
+
+        Thread t1 = new Thread(() -> {
+            try {
+                ticketService.assignTicketToUser(ticket1, user1);
+                System.out.println("T1: assigned successfully, version: " + ticket1.getVersion());
+            } catch (RuntimeException e) {
+                System.out.println("T1: conflict detected — " + e.getMessage());
+            }
+        });
+
+        Thread t2 = new Thread(() -> {
+            try {
+                ticketService.assignTicketToUser(ticket1, user2);
+                System.out.println("T2: assigned successfully, version: " + ticket1.getVersion());
+            } catch (RuntimeException e) {
+                System.out.println("T2: conflict detected — " + e.getMessage());
+            }
+        });
+
+        t1.start();
+        t2.start();
+        t1.join();
+        t2.join();
+
+        System.out.println("Final assignee: " + ticket1.getUser().getName());
+        System.out.println("Final version: " + ticket1.getVersion());
     }
 }

@@ -6,15 +6,17 @@ import LLD.LLDQuestions.JiraTicketSystem.User;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class Ticket {
-    String id;
-    String name;
-    String description;
-    TicketStatus ticketStatus;
-    Priority priority;
-    User user;
-    List<Comment> comments;
+    private String id;
+    private String name;
+    private String description;
+    private TicketStatus ticketStatus;
+    private Priority priority;
+    private User user;
+    private List<Comment> comments;
+    private final AtomicInteger version = new AtomicInteger(0);
 
     protected Ticket(String id, String name, String description, TicketStatus ticketStatus, Priority priority) {
         this.id = id;
@@ -81,5 +83,13 @@ public abstract class Ticket {
         comments.add(comment);
     }
 
+    public int getVersion() {
+        return version.get();
+    }
+
     public abstract TicketType getTicketType();
+
+    public boolean compareAndIncrementVersion(int expectedVersion) {
+        return !version.compareAndSet(expectedVersion, expectedVersion + 1);
+    }
 }
