@@ -5,16 +5,20 @@ import LLD.LLDQuestions.JiraTicketSystem.Notifications.NotificationEventType;
 import LLD.LLDQuestions.JiraTicketSystem.Notifications.NotificationService;
 import LLD.LLDQuestions.JiraTicketSystem.User;
 import LLD.LLDQuestions.JiraTicketSystem.cache.IdempotencyStore;
+import LLD.LLDQuestions.JiraTicketSystem.repository.TicketRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public class TicketService {
     NotificationService notificationService;
     IdempotencyStore<Ticket> idempotencyStore;
+    TicketRepository ticketRepository;
 
-    public TicketService(NotificationService notificationService, IdempotencyStore<Ticket> idempotencyStore) {
+    public TicketService(NotificationService notificationService, IdempotencyStore<Ticket> idempotencyStore, TicketRepository ticketRepository) {
         this.notificationService = notificationService;
         this.idempotencyStore = idempotencyStore;
+        this.ticketRepository = ticketRepository;
     }
 
     public void assignTicketToUser(Ticket ticket, User user, String idempotencyKey) {
@@ -30,6 +34,7 @@ public class TicketService {
 
         ticket.assignTicket(user);
         user.assignTicket(ticket);
+        ticketRepository.update(ticket);
         idempotencyStore.save(idempotencyKey, ticket);
 
         notificationService.notify(
@@ -41,7 +46,7 @@ public class TicketService {
     }
 
     public List<Ticket> getTicketsForUser(User user) {
-        return user.getAssignedTickets();
+        return ticketRepository.findByUser(user);
     }
 
     public void updateTicketStatus(Ticket ticket, TicketStatus newStatus) {
@@ -58,6 +63,7 @@ public class TicketService {
         }
 
         ticket.setTicketStatus(newStatus);
+        ticketRepository.update(ticket);
         notificationService.notify(
                 new NotificationEvent(
                         NotificationEventType.STATUS_CHANGED,
@@ -72,7 +78,12 @@ public class TicketService {
             return idempotencyStore.get(idempotencyKey);
         }
         Ticket ticket = TicketFactory.createTicket(request);
+        ticketRepository.save(ticket);
         idempotencyStore.save(idempotencyKey, ticket);
         return ticket;
+    }
+
+    public Optional<Ticket> findById(String id) {
+        return ticketRepository.findById(id);
     }
 }

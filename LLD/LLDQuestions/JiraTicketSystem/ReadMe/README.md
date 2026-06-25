@@ -1,380 +1,326 @@
 # Jira Ticket System — LLD
 
-## What This Is
-A Low Level Design of a simplified Jira-like ticket management system with a pluggable notification service built using the Observer design pattern.
+---
+
+## Step 1 — Requirements
+
+### Functional Requirements
+- Create tickets of different types (Bug, Story)
+- Assign tickets to users
+- Update ticket status (OPEN → IN_PROGRESS → CLOSED)
+- Add comments to tickets
+- Notify assignee via Email and WhatsApp on ticket events
+- Prevent duplicate operations on retry (idempotency)
+- Handle concurrent modifications safely
+
+### Non-Functional Requirements
+- Thread-safe ticket mutations
+- Pluggable notification channels (add Slack without changing existing code)
+- Swappable storage layer (in-memory today, DB tomorrow)
+- Extensible ticket types (add Epic without changing factory logic)
 
 ---
 
-## Package Structure
+## Step 2 — Entities / Models
+
+| Entity | Key Fields | Purpose |
+|---|---|---|
+| `Ticket` (abstract) | id, name, description, status, priority, user, comments, version | Base ticket — never instantiated directly |
+| `BugTicket` | + bugSeverity (CRITICAL/MAJOR/MINOR) | Represents a bug |
+| `StoryTicket` | + tshirtSize (XS/S/M/L/XL) | Represents a user story |
+| `User` | id, name, email, phoneNumber, assignedTickets | Person who creates/gets assigned tickets |
+| `Comment` | id, message, timestamp, author | Comment on a ticket |
+| `Project` | id, name, description, tickets | Container for tickets |
+| `NotificationEvent` | eventType, ticket, user, message | Data carrier for notifications |
+
+### Enums
+| Enum | Values |
+|---|---|
+| `TicketStatus` | OPEN, IN_PROGRESS, CLOSED |
+| `TicketType` | BUG, STORY |
+| `Priority` | LOW, MEDIUM, HIGH |
+| `BugSeverity` | CRITICAL, MAJOR, MINOR |
+| `TshirtSize` | XS, S, M, L, XL |
+| `NotificationEventType` | TICKET_ASSIGNED, STATUS_CHANGED, COMMENT_ADDED |
+
+---
+
+## Step 3 — Schema & Relationships
+
+```
+Project (1) ──────────────── (N) Ticket
+                                    │
+                          ┌─────────┴──────────┐
+                          │                    │
+                       BugTicket           StoryTicket
+                      + severity           + tshirtSize
+
+Ticket (N) ──── assigned to ──── (1) User
+Ticket (1) ──────────────────── (N) Comment
+Comment (N) ──── written by ──── (1) User
+
+TicketService ──── uses ──── NotificationService
+TicketService ──── uses ──── TicketRepository
+TicketService ──── uses ──── IdempotencyStore<Ticket>
+
+NotificationService ──── holds ──── List<NotificationSender>
+NotificationSender (interface)
+  ├── EmailNotificationSender
+  └── WhatsappNotificationSender
+
+TicketRepository (interface)
+  └── InMemoryTicketRepository
+```
+
+---
+
+## Step 4 — Package Structure
 
 ```
 JiraTicketSystem/
-├── Ticket.java
-├── TicketStatus.java
-├── TicketService.java
-├── Priority.java
-├── User.java
-├── Project.java
+├── Ticket/
+│   ├── Ticket.java                    ← abstract base
+│   ├── BugTicket.java
+│   ├── StoryTicket.java
+│   ├── TicketType.java
+│   ├── TicketStatus.java
+│   ├── Priority.java
+│   ├── BugSeverity.java
+│   ├── TshirtSize.java
+│   ├── TicketRequest.java             ← internal factory input
+│   ├── TicketFactory.java             ← Factory Pattern
+│   └── TicketService.java
+├── Comment/
+│   ├── Comment.java
+│   └── CommentService.java
 ├── Notifications/
-│   ├── NotificationEventType.java
-│   ├── NotificationEvent.java
-│   ├── NotificationSender.java          ← interface
+│   ├── NotificationSender.java        ← interface (Observer)
 │   ├── NotificationService.java
+│   ├── NotificationEvent.java
+│   ├── NotificationEventType.java
 │   ├── EmailNotificationSender.java
 │   └── WhatsappNotificationSender.java
+├── repository/
+│   ├── TicketRepository.java          ← interface
+│   └── InMemoryTicketRepository.java
+├── cache/
+│   └── IdempotencyStore.java          ← generic cache
+├── User.java
+├── Project.java
 └── Main.java
 ```
 
 ---
 
-## UML Class Diagram
+## Step 5 — UML Class Diagram
 
 ```
-┌─────────────────────┐          ┌──────────────────────┐
-│      <<enum>>       │          │       <<enum>>        │
-│    TicketStatus     │          │       Priority        │
-│─────────────────────│          │──────────────────────│
-│  OPEN               │          │  LOW                  │
-│  IN_PROGRESS        │          │  MEDIUM               │
-│  CLOSED             │          │  HIGH                 │
-└─────────────────────┘          └──────────────────────┘
-           │                                │
-           │ uses                           │ uses
-           ▼                                ▼
-┌──────────────────────────────────────────────────────┐
-│                        Ticket                        │
-│──────────────────────────────────────────────────────│
-│  - id: String                                        │
-│  - name: String                                      │
-│  - description: String                               │
-│  - ticketStatus: TicketStatus                        │
-│  - priority: Priority                                │
-│  - user: User                                        │
-│──────────────────────────────────────────────────────│
-│  + assignTicket(user: User): void                    │
-│  + getUser(): User                                   │
-│  + getTicketStatus(): TicketStatus                   │
-│  + setTicketStatus(status: TicketStatus): void       │
-└──────────────────────────────────────────────────────┘
-           │ assigned to
-           ▼
-┌──────────────────────────────────────────────────────┐
-│                         User                         │
-│──────────────────────────────────────────────────────│
-│  - id: String                                        │
-│  - name: String                                      │
-│  - email: String                                     │
-│  - phoneNumber: String                               │
-│  - assignedTickets: List<Ticket>                     │
-│──────────────────────────────────────────────────────│
-│  + assignTicket(ticket: Ticket): void                │
-│  + getAssignedTickets(): List<Ticket>                │
-└──────────────────────────────────────────────────────┘
+┌──────────────────────────────────────┐
+│          Ticket (abstract)           │
+│──────────────────────────────────────│
+│ - id: String                         │
+│ - name: String                       │
+│ - description: String                │
+│ - status: TicketStatus               │
+│ - priority: Priority                 │
+│ - user: User                         │
+│ - comments: List<Comment>            │
+│ - version: AtomicInteger             │
+│──────────────────────────────────────│
+│ + assignTicket(user): void           │
+│ + addComment(comment): void          │
+│ + compareAndIncrementVersion(): bool │
+│ + getTicketType(): TicketType        │ ← abstract
+└──────────────────────────────────────┘
+           △               △
+           │               │
+┌──────────────┐   ┌───────────────┐
+│  BugTicket   │   │  StoryTicket  │
+│──────────────│   │───────────────│
+│ + severity   │   │ + tshirtSize  │
+└──────────────┘   └───────────────┘
 
-┌──────────────────────────────────────────────────────┐
-│                    TicketService                     │
-│──────────────────────────────────────────────────────│
-│  - notificationService: NotificationService          │
-│──────────────────────────────────────────────────────│
-│  + assignTicketToUser(ticket, user): void            │
-│  + updateTicketStatus(ticket, status): void          │
-│  + getTicketsForUser(user): List<Ticket>             │
-└──────────────────────────────────────────────────────┘
-           │ fires events via
-           ▼
-┌──────────────────────────────────────────────────────┐
-│                  NotificationService                 │
-│──────────────────────────────────────────────────────│
-│  - senders: List<NotificationSender>                 │
-│──────────────────────────────────────────────────────│
-│  + addNotificationSender(sender): void               │
-│  + notify(event: NotificationEvent): void            │
-└──────────────────────────────────────────────────────┘
-           │ loops and calls send()
-           ▼
-┌──────────────────────────────────────────────────────┐
-│               <<interface>>                          │
-│             NotificationSender                       │
-│──────────────────────────────────────────────────────│
-│  + send(event: NotificationEvent): void              │
-└──────────────────────────────────────────────────────┘
-           △                    △
-           │ implements         │ implements
-           │                    │
-┌──────────────────┐   ┌────────────────────────────┐
-│  EmailNotifi-    │   │  WhatsappNotification-      │
-│  cationSender    │   │  Sender                     │
-│──────────────────│   │────────────────────────────│
-│ send(event)      │   │ send(event)                 │
-│ → email user     │   │ → whatsapp user             │
-└──────────────────┘   └────────────────────────────┘
+TicketRequest ──────► TicketFactory ──────► Ticket subclass
 
-┌──────────────────────────────────────────────────────┐
-│                  NotificationEvent                   │
-│──────────────────────────────────────────────────────│
-│  - eventType: NotificationEventType                  │
-│  - ticket: Ticket                                    │
-│  - user: User                                        │
-│  - message: String                                   │
-└──────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│                 TicketService               │
+│─────────────────────────────────────────────│
+│ - notificationService: NotificationService  │
+│ - ticketRepository: TicketRepository        │
+│ - idempotencyStore: IdempotencyStore<Ticket>│
+│─────────────────────────────────────────────│
+│ + createTicket(request, key): Ticket        │
+│ + assignTicketToUser(ticket, user, key)     │
+│ + updateTicketStatus(ticket, status)        │
+│ + findById(id): Optional<Ticket>            │
+│ + getTicketsForUser(user): List<Ticket>     │
+└─────────────────────────────────────────────┘
 
-┌─────────────────────────┐
-│        <<enum>>         │
-│   NotificationEventType │
-│─────────────────────────│
-│  TICKET_ASSIGNED        │
-│  STATUS_CHANGED         │
-│  PRIORITY_CHANGED       │
-└─────────────────────────┘
+NotificationSender (interface)
+  + send(event: NotificationEvent): void
+    △              △
+    │              │
+EmailNotifi-   WhatsappNotifi-
+cationSender   cationSender
+
+TicketRepository (interface)
+  + save / findById / update / delete / findByUser
+    △
+    │
+InMemoryTicketRepository (ConcurrentHashMap)
+
+IdempotencyStore<T>
+  + contains(key): boolean
+  + save(key, value): void
+  + get(key): T
 ```
 
 ---
 
-## How It Works — Step by Step Flow
+## Step 6 — Design Patterns Used
 
-```
-Main.java
-  │
-  ├── Creates NotificationService
-  ├── Adds EmailNotificationSender
-  ├── Adds WhatsappNotificationSender
-  │
-  ├── Creates TicketService(notificationService)   ← Dependency Injection
-  │
-  ├── assignTicketToUser(ticket, user)
-  │     │
-  │     ├── ticket.assignTicket(user)
-  │     ├── user.assignTicket(ticket)
-  │     └── notificationService.notify(
-  │               NotificationEvent(TICKET_ASSIGNED, ticket, user, msg))
-  │                     │
-  │                     ├── EmailNotificationSender.send(event)
-  │                     └── WhatsappNotificationSender.send(event)
-  │
-  └── updateTicketStatus(ticket, newStatus)
-        │
-        ├── validates OPEN → CLOSED not allowed
-        ├── ticket.setTicketStatus(newStatus)
-        └── notificationService.notify(
-                  NotificationEvent(STATUS_CHANGED, ticket, ticket.getUser(), msg))
-                        │
-                        ├── EmailNotificationSender.send(event)
-                        └── WhatsappNotificationSender.send(event)
-```
-
----
-
-## Design Pattern Used
+### Factory Pattern
+`TicketFactory.createTicket(TicketRequest)` — single entry point, caller never instantiates `BugTicket`/`StoryTicket` directly. Adding `EpicTicket` = add case to factory, zero other changes.
 
 ### Observer Pattern
-| Observer Concept | This System |
+| Concept | Implementation |
 |---|---|
-| Subject / Observable | `TicketService` (fires events) |
+| Subject | `TicketService`, `CommentService` |
 | Observer interface | `NotificationSender` |
-| Concrete Observer | `EmailNotificationSender`, `WhatsappNotificationSender` |
-| Notify method | `NotificationService.notify(event)` |
+| Concrete observers | `EmailNotificationSender`, `WhatsappNotificationSender` |
 | Event data | `NotificationEvent` |
 
-`TicketService` does not know whether notification goes via Email or WhatsApp. It just calls `notify()`. `NotificationService` handles delivery. Adding a new channel (Slack, SMS) = implement `NotificationSender`, call `addNotificationSender()`. Zero changes to existing code.
+### Repository Pattern
+`TicketRepository` interface hides storage details. Swap `InMemoryTicketRepository` for `MySQLTicketRepository` — `TicketService` unchanged.
+
+### Dependency Injection
+`TicketService` receives `NotificationService`, `TicketRepository`, `IdempotencyStore` via constructor — never creates them internally. `Main.java` controls wiring.
 
 ---
 
-## SOLID Principles Applied
+## Step 7 — SOLID Principles
 
-### S — Single Responsibility Principle
-Each class has one job:
-- `Ticket` → holds ticket data
-- `TicketService` → manages ticket operations
-- `NotificationService` → orchestrates notifications
-- `EmailNotificationSender` → only sends emails
-
-### O — Open/Closed Principle
-`NotificationService` is open for extension, closed for modification.
-Adding `SlackNotificationSender` requires zero changes to existing classes — just implement `NotificationSender` and register it.
-
-### L — Liskov Substitution Principle
-`EmailNotificationSender` and `WhatsappNotificationSender` are interchangeable wherever `NotificationSender` is expected. `List<NotificationSender>` holds both without distinction.
-
-### I — Interface Segregation Principle
-`NotificationSender` has exactly one method — `send(event)`. No bloated interface forcing implementors to stub unused methods.
-
-### D — Dependency Inversion Principle
-`TicketService` depends on `NotificationService` abstraction injected from outside — not on `EmailNotificationSender` or `WhatsappNotificationSender` concretions.
-`NotificationService` depends on `NotificationSender` interface — not concrete senders.
+| Principle | Application |
+|---|---|
+| **S** Single Responsibility | `TicketService` manages business rules, `TicketRepository` manages storage, `NotificationService` manages delivery |
+| **O** Open/Closed | Add `SlackNotificationSender` — implement interface, register it. Zero changes to existing code |
+| **L** Liskov Substitution | `BugTicket`/`StoryTicket` interchangeable as `Ticket`. `Email`/`Whatsapp` interchangeable as `NotificationSender` |
+| **I** Interface Segregation | `NotificationSender` has one method. `TicketRepository` has focused CRUD methods only |
+| **D** Dependency Inversion | `TicketService` depends on `TicketRepository` interface, not `InMemoryTicketRepository` concretion |
 
 ---
 
-## API Design
-
-### How APIs Were Designed
-
-#### Rule 1 — URLs are nouns (resources), not verbs
-```
-✗ /createTicket
-✗ /getTicketById
-✓ /tickets
-✓ /tickets/{id}
-```
-
-#### Rule 2 — HTTP method carries the verb
-
-| Method | When to use | Example |
-|---|---|---|
-| GET | Read data, no side effects | `GET /tickets/{id}` |
-| POST | Create new resource | `POST /tickets` |
-| PUT | Update existing resource (full) | `PUT /tickets/{id}/status` |
-| PATCH | Partial update (one field) | `PATCH /tickets/{id}` |
-| DELETE | Remove resource | `DELETE /tickets/{id}` |
-
-Decision rule:
-- Am I reading? → GET
-- Am I creating new? → POST
-- Am I updating whole resource? → PUT
-- Am I updating one field? → PATCH
-- Am I deleting? → DELETE
-
-#### Rule 3 — Nested resources for relationships
-```
-/tickets/{id}/comments    ← comments belong to a ticket
-/users/{id}/tickets       ← tickets belonging to a user
-```
-
-#### Rule 4 — HTTP Status codes
-
-| Code | Meaning | When |
-|---|---|---|
-| 200 | OK | Successful GET, PUT |
-| 201 | Created | Successful POST |
-| 400 | Bad Request | Invalid input (null name) |
-| 404 | Not Found | Ticket/User doesn't exist |
-| 409 | Conflict | Invalid state transition (CLOSED→CLOSED) |
-| 500 | Server Error | Unexpected failure |
-
-#### Rule 5 — Versioning
-```
-/api/v1/tickets
-/api/v2/tickets
-```
-Lets old clients use v1 while new clients use v2 — no breaking changes.
-
-#### Rule 6 — Pagination for list endpoints
-```
-GET /users/{id}/tickets?page=0&size=20
-```
-Never return unlimited list — wraps response in:
-```json
-{
-  "data": [...],
-  "page": 0,
-  "size": 20,
-  "totalCount": 10000
-}
-```
-
----
-
-### API Endpoints
-
-```
-POST   /api/v1/tickets                    201 Created     → create ticket
-GET    /api/v1/tickets/{id}               200 / 404       → get ticket by id
-PUT    /api/v1/tickets/{id}/assign        200 / 404       → assign ticket to user
-PUT    /api/v1/tickets/{id}/status        200 / 404 / 409 → update status
-POST   /api/v1/tickets/{id}/comments      201 / 404       → add comment
-GET    /api/v1/tickets/{id}/comments      200 / 404       → get all comments
-GET    /api/v1/users/{id}/tickets         200 / 404       → get user's tickets (paginated)
-POST   /api/v1/users                      201 Created     → create user
-```
-
-### Why assign and status are PUT not POST?
-Ticket already exists — we're updating it, not creating new. POST creates new resources, PUT updates existing ones.
-
----
-
-## Idempotency
+## Step 8 — Concurrency
 
 ### Problem
-Client calls `POST /tickets` — network drops — client retries — two identical tickets created.
+Two threads assign same ticket simultaneously — last write wins silently.
+
+### Solution — Optimistic Locking
+```
+Ticket holds: AtomicInteger version = 0
+
+Before mutation:
+1. Read currentVersion
+2. compareAndSet(currentVersion, currentVersion + 1)
+   → true  = this thread won, proceed
+   → false = conflict, throw RuntimeException
+3. Mutate ticket
+4. Persist to repository
+5. Fire notification
+```
+
+### Why AtomicInteger not int?
+`int++` is not atomic — two threads read version=3, both increment to 4, no conflict detected. `AtomicInteger.compareAndSet` is atomic hardware instruction — exactly one thread wins.
+
+### Why validate before claiming version?
+If business rule validation throws after version already claimed — version incremented but ticket unchanged. Inconsistent state. Always: validate → claim version → mutate.
+
+| Scenario | Approach |
+|---|---|
+| Low contention | Optimistic locking (this system) |
+| High contention | Pessimistic locking (DB row lock) |
+| Multiple servers | Optimistic or Pessimistic (not synchronized) |
+
+---
+
+## Step 9 — Idempotency
+
+### Problem
+Client calls `POST /tickets`, network drops, retries — two identical tickets created.
 
 ### Solution
-Client sends a unique `idempotencyKey` with each request. Server stores key → result mapping. If same key seen again, return cached result without re-executing.
+Caller sends unique `idempotencyKey`. Server checks before executing. If seen before, return cached result.
 
-### Implementation
 ```
-IdempotencyStore<T>         ← generic cache (ConcurrentHashMap)
-TicketService.createTicket  ← checks key before creating, saves after
-TicketService.assignTicket  ← checks key before assigning, saves after
-```
-
-### Flow
-```
-First call  (key=abc123) → not in store → execute → save → return ticket
-Second call (key=abc123) → found in store → return cached ticket, skip execution
+First call  (key=abc) → not in store → execute → save(key, result) → return
+Second call (key=abc) → found in store → return cached result, skip execution
 ```
 
 ### Key design decisions
-- `IdempotencyStore<T>` is generic — works for tickets, users, any resource
-- One store shared across operations — different key namespaces separate them
-  - `create-ticket-{uuid}` → create operations
-  - `assign-{ticketId}-{userId}` → assign operations
-- In production: Redis with TTL (24 hours) instead of in-memory map
+- `IdempotencyStore<T>` is generic — reused for create ticket, assign ticket, any future operation
+- Key namespaces: `create-ticket-{uuid}`, `assign-{ticketId}-{userId}`
+- In production: Redis with 24h TTL instead of in-memory `ConcurrentHashMap`
 
 ---
 
-## Concurrency
+## Step 10 — API Design
 
-### Problem
-Two managers assign same ticket simultaneously:
+### Design Rules
+1. **URLs are nouns** — `/tickets/{id}` not `/getTicketById`
+2. **HTTP method is the verb** — GET=read, POST=create, PUT=update, DELETE=remove
+3. **Nested resources** — `/tickets/{id}/comments` for comments on a ticket
+4. **Correct status codes** — 201 on create, 404 on not found, 409 on conflict
+5. **Versioned** — `/api/v1/` prefix so consumers aren't broken on schema changes
+6. **Paginated lists** — `?page=0&size=20` on all list endpoints
+
+### Endpoints
 ```
-Thread A: reads ticket.user = null → assigns user1
-Thread B: reads ticket.user = null → assigns user2
-Both write → last one wins, first assignment silently lost
+POST   /api/v1/tickets                      201 / 400        → create ticket
+GET    /api/v1/tickets/{id}                 200 / 404        → get ticket
+PUT    /api/v1/tickets/{id}/assign          200 / 404        → assign to user
+PUT    /api/v1/tickets/{id}/status          200 / 404 / 409  → update status
+POST   /api/v1/tickets/{id}/comments        201 / 404        → add comment
+GET    /api/v1/tickets/{id}/comments        200 / 404        → get comments
+GET    /api/v1/users/{id}/tickets           200 / 404        → user's tickets (paginated)
+POST   /api/v1/users                        201 / 400        → create user
 ```
 
-### Solution — Optimistic Locking
-`Ticket` holds `AtomicInteger version = 0`. Before any mutation:
-1. Read current version
-2. Attempt `compareAndSet(currentVersion, currentVersion + 1)`
-3. If fails → another thread already modified → throw `RuntimeException`
-4. If succeeds → proceed with mutation
+---
 
-### Why AtomicInteger not int?
-`int` version with `++` is not thread-safe — two threads can both read version=3 and both increment to 4. `AtomicInteger.compareAndSet` is atomic — only one thread wins.
+## Step 11 — Scaling & Edge Cases
 
-### Why compareAndSet not incrementAndGet?
-`incrementAndGet` always succeeds — no conflict detection. `compareAndSet(expected, new)` only succeeds if current value matches expected — detects when another thread already changed it.
-
-### Validate before claiming version
-```
-1. Validate business rules (OPEN → CLOSED not allowed)
-2. compareAndSet to claim version
-3. Mutate ticket
-4. Fire notification
-```
-If validation fails after version claimed → version incremented but ticket unchanged → inconsistent state. Always validate first.
-
-### When to use what
-| Scenario | Approach |
+### Edge Cases Handled
+| Case | Handling |
 |---|---|
-| Low contention (rare conflicts) | Optimistic locking (this system) |
-| High contention (frequent conflicts) | Pessimistic locking (DB row lock) |
-| Single server | `synchronized` method |
-| Multiple servers | Optimistic or Pessimistic |
+| Concurrent ticket mutation | Optimistic locking — one thread wins, other retries |
+| Duplicate API retry | Idempotency key — cached response returned |
+| OPEN → CLOSED directly | Validation in `updateTicketStatus` throws `IllegalArgumentException` |
+| Comment on unassigned ticket | `ticket.getUser()` returns null → notification skipped |
+| Ticket not found | `Optional<Ticket>` — caller handles missing ticket explicitly |
+
+### Scaling Considerations
+| Component | Current | Production |
+|---|---|---|
+| Storage | `ConcurrentHashMap` (in-memory) | MySQL / MongoDB |
+| Idempotency store | `ConcurrentHashMap` | Redis with TTL |
+| Notifications | Synchronous in same thread | Async via message queue (Kafka/SQS) |
+| Locking | Optimistic (AtomicInteger) | DB-level optimistic lock (`@Version`) |
+| Multi-server | Single JVM only | Distributed lock (Redis Redlock) |
+
+### What would break at scale
+- `InMemoryTicketRepository` — data lost on restart, no shared state across servers
+- Synchronous notifications — slow email/WhatsApp API blocks ticket operations
+- `IdempotencyStore` in-memory — not shared across multiple server instances
 
 ---
 
 ## Sample Output
 
 ```
-Sending email to anmolsuri1@gmail.com with message: Ticket assigned to user: Anmol Suri
-Sending WhatsApp message to 12345 with message: Ticket assigned to user: Anmol Suri
-Sending email to asuri2@gmail.com with message: Ticket assigned to user: Anmol Suri 2
-Sending WhatsApp message to 23456 with message: Ticket assigned to user: Anmol Suri 2
-Sending email to anmolsuri1@gmail.com with message: Ticket status updated to: IN_PROGRESS
-Sending WhatsApp message to 12345 with message: Ticket status updated to: IN_PROGRESS
-Sending email to anmolsuri1@gmail.com with message: Ticket status updated to: CLOSED
-Sending WhatsApp message to 12345 with message: Ticket status updated to: CLOSED
-User 1 Ticket: Ticket 1 - CLOSED
-User 1 Ticket: Ticket 2 - OPEN
-User 2 Ticket: Ticket 3 - OPEN
+Retrieved Ticket: Login crash - NPE on login
+Sending email to anmolsuri@gmail.com with message: Ticket assigned to user: Anmol Suri
+Sending WhatsApp message to 1234 with message: Ticket assigned to user: Anmol Suri
+First assignment — ticket assigned to: Anmol Suri
+Duplicate request detected, returning cached ticket
+Second assignment — ticket assigned to: Anmol Suri
 ```
