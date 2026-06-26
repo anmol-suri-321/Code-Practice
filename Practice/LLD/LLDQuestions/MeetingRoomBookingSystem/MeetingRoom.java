@@ -1,8 +1,8 @@
 package Practice.LLD.LLDQuestions.MeetingRoomBookingSystem;
 
-import java.time.LocalDate;
+import Practice.LLD.LLDQuestions.MeetingRoomBookingSystem.Frequency.FrequencyStrategy;
+import Practice.LLD.LLDQuestions.MeetingRoomBookingSystem.Frequency.FrequencyStrategyFactory;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -40,23 +40,23 @@ public class MeetingRoom {
         bookings.add(booking);
     }
 
-    // expected 12->1, booked 11:30->12:30 → overlap → return false
-    public boolean isRoomAvailable(int attendees, TimeSlot timeSlot, BookingSchedule bookingSchedule) {
+    public boolean isRoomAvailable(int attendees, TimeSlot newTimeSlot, BookingSchedule bookingSchedule) {
         if(attendees > capacity) {
             return false;
         }
-        Set<Integer> requestedDays = getDaysOfYear(bookingSchedule);
+
+        FrequencyStrategy newfrequencyStrategy = FrequencyStrategyFactory.getStrategy(bookingSchedule.getFrequency());
+        Set<Integer> requestedDays = newfrequencyStrategy.getDays(bookingSchedule.getStartDate(), bookingSchedule.getEndDate());
 
         for (Booking book : bookings) {
-            TimeSlot slot = book.getTimeSlot();
+            TimeSlot bookedSlot = book.getTimeSlot();
             BookingSchedule schedule = book.getSchedule();
 
-            Set<Integer> bookedDays = getDaysOfYear(schedule);
+            FrequencyStrategy bookedFrequencyStrategy = FrequencyStrategyFactory.getStrategy(schedule.getFrequency());
+            Set<Integer> bookedDays = bookedFrequencyStrategy.getDays(schedule.getStartDate(), schedule.getEndDate());
 
-            boolean daysOverlap = requestedDays.stream().anyMatch(bookedDays::contains);
-            boolean timesOverlap = timeSlot.getStartTime().isBefore(slot.getEndTime())
-                    && timeSlot.getEndTime().isAfter(slot.getStartTime());
-
+            boolean daysOverlap = checkDaysOverlap(requestedDays, bookedDays);
+            boolean timesOverlap = checkTimeOverlap(bookedSlot, newTimeSlot);
             if (daysOverlap && timesOverlap) {
                 return false;
             }
@@ -64,26 +64,23 @@ public class MeetingRoom {
         return true;
     }
 
-    private Set<Integer> getDaysOfYear(BookingSchedule schedule) {
-        Set<Integer> days = new HashSet<>();
-        LocalDate start = schedule.getStartDate();
-        LocalDate end = schedule.getEndDate();
-
-        if (schedule.getFrequency().equals(BookingFrequency.SINGLE)) {
-            days.add(start.getDayOfYear());
-        } else if (schedule.getFrequency().equals(BookingFrequency.DAILY)) {
-            for (LocalDate d = start; !d.isAfter(end); d = d.plusDays(1)) {
-                days.add(d.getDayOfYear());
-            }
-        } else if (schedule.getFrequency().equals(BookingFrequency.WEEKLY)) {
-            for (LocalDate d = start; !d.isAfter(end); d = d.plusWeeks(1)) {
-                days.add(d.getDayOfYear());
-            }
-        } else { // MONTHLY
-            for (LocalDate d = start; !d.isAfter(end); d = d.plusMonths(1)) {
-                days.add(d.getDayOfYear());
+    private static boolean checkDaysOverlap(Set<Integer> requestedDays, Set<Integer> bookedDays) {
+        for(int day : requestedDays) {
+            if(bookedDays.contains(day)) {
+                return true;
             }
         }
-        return days;
+
+        return false;
+    }
+
+    /**
+     * booked : 12:00 - 13:00, newSlot : 11:30 - 12;15
+     * booked : 12:00 - 13:00, newSlot : 12:50 - 13:10
+     * booked : 12:00 - 13:00, newSlot : 11:00 - 14:00
+     **/
+    private static boolean checkTimeOverlap(TimeSlot bookedSlot, TimeSlot newTimeSlot) {
+        return newTimeSlot.getStartTime().isBefore(bookedSlot.getEndTime())
+                && newTimeSlot.getEndTime().isAfter(bookedSlot.getStartTime());
     }
 }

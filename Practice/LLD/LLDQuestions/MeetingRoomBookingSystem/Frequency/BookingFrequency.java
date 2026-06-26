@@ -1,4 +1,4 @@
-package Practice.LLD.LLDQuestions.MeetingRoomBookingSystem;
+package Practice.LLD.LLDQuestions.MeetingRoomBookingSystem.Frequency;
 
 public enum BookingFrequency {
     SINGLE,

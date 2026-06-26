@@ -1,5 +1,7 @@
 package Practice.LLD.LLDQuestions.MeetingRoomBookingSystem;
 
+import Practice.LLD.LLDQuestions.MeetingRoomBookingSystem.Frequency.BookingFrequency;
+
 import java.time.LocalDate;
 
 public class BookingSchedule {
