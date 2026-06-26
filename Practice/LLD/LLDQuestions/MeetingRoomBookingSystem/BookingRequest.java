@@ -1,6 +1,6 @@
 package Practice.LLD.LLDQuestions.MeetingRoomBookingSystem;
 
-public class Booking {
+public class BookingRequest {
     private String bookingId;
     private BookingUser organiser;
     private MeetingRoom room;
@@ -9,7 +9,7 @@ public class Booking {
     private int bookingCapacity;
     private BookingSchedule schedule;
 
-    public Booking(String bookingId, BookingUser organiser, MeetingRoom room, TimeSlot timeSlot, BookingStatus status, int bookingCapacity, BookingSchedule schedule) {
+    public BookingRequest(String bookingId, BookingUser organiser, MeetingRoom room, TimeSlot timeSlot, BookingStatus status, int bookingCapacity, BookingSchedule schedule) {
         this.bookingId = bookingId;
         this.organiser = organiser;
         this.room = room;
@@ -19,16 +19,16 @@ public class Booking {
         this.schedule = schedule;
     }
 
+    public String getBookingId() {
+        return bookingId;
+    }
+
     public BookingUser getOrganiser() {
         return organiser;
     }
 
     public MeetingRoom getRoom() {
         return room;
-    }
-
-    public String getBookingId() {
-        return bookingId;
     }
 
     public TimeSlot getTimeSlot() {
@@ -45,9 +45,5 @@ public class Booking {
 
     public BookingSchedule getSchedule() {
         return schedule;
-    }
-
-    public void setStatus(BookingStatus status) {
-        this.status = status;
     }
 }

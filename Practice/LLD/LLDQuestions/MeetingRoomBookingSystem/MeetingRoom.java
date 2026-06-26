@@ -41,7 +41,10 @@ public class MeetingRoom {
     }
 
     // expected 12->1, booked 11:30->12:30 → overlap → return false
-    public boolean isRoomAvailable(TimeSlot timeSlot, BookingSchedule bookingSchedule) {
+    public boolean isRoomAvailable(int attendees, TimeSlot timeSlot, BookingSchedule bookingSchedule) {
+        if(attendees > capacity) {
+            return false;
+        }
         Set<Integer> requestedDays = getDaysOfYear(bookingSchedule);
 
         for (Booking book : bookings) {
