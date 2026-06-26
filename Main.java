@@ -1,6 +1,3 @@
-import LLD.DesignPatterns.FactoryDesignPattern.OS;
-import LLD.DesignPatterns.FactoryDesignPattern.OSFactory;
-
 class TreeNode {
     int val;
     TreeNode left;
