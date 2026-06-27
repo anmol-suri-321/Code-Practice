@@ -1,7 +1,7 @@
 package Practice.LLD.LLDQuestions.MeetingRoomBookingSystem;
 
 public enum BookingStatus {
-    CREATED,
+    CONFIRMED,
     COMPLETED,
     CANCELLED
 }
