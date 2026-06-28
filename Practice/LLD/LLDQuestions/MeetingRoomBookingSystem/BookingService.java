@@ -22,6 +22,7 @@ public class BookingService {
         }
 
         if(room.checkAndBookMeetingRoom(booking)) {
+            booking.setStatus(BookingStatus.CONFIRMED);
             bookingRepository.save(booking);
             bookingIdempotencyStore.save(booking.getBookingId(), booking);
             return booking;
@@ -32,6 +33,10 @@ public class BookingService {
     }
 
     public void cancelBooking(MeetingRoom room, Booking booking) {
+        if (booking.getStatus() == BookingStatus.CANCELLED ||
+                booking.getStatus() == BookingStatus.COMPLETED) {
+            throw new IllegalStateException("Cannot cancel booking with status: " + booking.getStatus());
+        }
         if(room.removeBooking(booking)) {
             booking.setStatus(BookingStatus.CANCELLED);
             bookingRepository.update(booking);
