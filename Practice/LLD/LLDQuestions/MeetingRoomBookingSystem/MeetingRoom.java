@@ -5,6 +5,8 @@ import Practice.LLD.LLDQuestions.MeetingRoomBookingSystem.Frequency.FrequencyStr
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class MeetingRoom {
     private String roomId;
@@ -12,6 +14,7 @@ public class MeetingRoom {
     private int capacity;
 
     private List<Booking> bookings;
+    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
     public MeetingRoom(String roomId, String roomName, int capacity) {
         this.roomId = roomId;
@@ -36,11 +39,16 @@ public class MeetingRoom {
         return bookings;
     }
 
-    public void addbooking(Booking booking) {
-        bookings.add(booking);
+    public boolean isRoomAvailable(int attendees, TimeSlot newTimeSlot, BookingSchedule bookingSchedule) {
+        readWriteLock.readLock().lock();
+        try {
+            return isRoomAvailableCheck(attendees, newTimeSlot, bookingSchedule);
+        } finally {
+            readWriteLock.readLock().unlock();
+        }
     }
 
-    public boolean isRoomAvailable(int attendees, TimeSlot newTimeSlot, BookingSchedule bookingSchedule) {
+    private boolean isRoomAvailableCheck(int attendees, TimeSlot newTimeSlot, BookingSchedule bookingSchedule) {
         if(attendees > capacity) {
             return false;
         }
@@ -82,5 +90,27 @@ public class MeetingRoom {
     private static boolean checkTimeOverlap(TimeSlot bookedSlot, TimeSlot newTimeSlot) {
         return newTimeSlot.getStartTime().isBefore(bookedSlot.getEndTime())
                 && newTimeSlot.getEndTime().isAfter(bookedSlot.getStartTime());
+    }
+
+    public boolean checkAndBookMeetingRoom(Booking booking) {
+        readWriteLock.writeLock().lock();
+        try {
+            if(isRoomAvailableCheck(booking.getBookingCapacity(), booking.getTimeSlot(), booking.getSchedule())) {
+                bookings.add(booking);
+                return true;
+            }
+            return false;
+        } finally {
+            readWriteLock.writeLock().unlock();
+        }
+    }
+
+    public boolean removeBooking(Booking booking) {
+        readWriteLock.writeLock().lock();
+        try {
+            return bookings.remove(booking);
+        } finally {
+            readWriteLock.writeLock().unlock();
+        }
     }
 }

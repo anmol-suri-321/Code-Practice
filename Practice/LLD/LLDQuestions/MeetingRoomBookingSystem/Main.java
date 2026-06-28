@@ -1,6 +1,9 @@
 package Practice.LLD.LLDQuestions.MeetingRoomBookingSystem;
 
 import Practice.LLD.LLDQuestions.MeetingRoomBookingSystem.Frequency.BookingFrequency;
+import Practice.LLD.LLDQuestions.MeetingRoomBookingSystem.Repository.BookingRepository;
+import Practice.LLD.LLDQuestions.MeetingRoomBookingSystem.Repository.InMemoryBookingRepository;
+import Practice.LLD.LLDQuestions.MeetingRoomBookingSystem.cache.IdempotencyStore;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -8,7 +11,9 @@ import java.time.LocalTime;
 
 public class Main {
     public static void main(String[] args) {
-        BookingService service = new BookingService();
+        IdempotencyStore<Booking> bookingIdempotencyStore = new IdempotencyStore<>();
+        BookingRepository bookingRepository = new InMemoryBookingRepository();
+        BookingService service = new BookingService(bookingIdempotencyStore, bookingRepository);
 
         BookingUser organiser = new BookingUser("Anmol", "anmol@gmail.com", "user-1");
         MeetingRoom room = new MeetingRoom("room-1", "Maurya", 10);
