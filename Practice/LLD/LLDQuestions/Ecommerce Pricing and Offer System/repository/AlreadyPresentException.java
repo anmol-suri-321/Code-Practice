@@ -1,0 +1,7 @@
+package Flipkart.repository;
+
+public class AlreadyPresentException extends RuntimeException {
+    public AlreadyPresentException(String s) {
+        super(s);
+    }
+}
