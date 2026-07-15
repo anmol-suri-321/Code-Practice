@@ -2,9 +2,11 @@
 .idea/
 *.iml
 
-# Compiled output
-out/
-*.class
-
 # macOS
 .DS_Store
+
+# Maven build output
+target/
+
+# Compiled class files
+*.class
