@@ -1,4 +1,4 @@
-package Flipkart;
+package Practice.LLD.LLDQuestions.Ecommerce;
 
 import java.util.Collection;
 import java.util.HashMap;

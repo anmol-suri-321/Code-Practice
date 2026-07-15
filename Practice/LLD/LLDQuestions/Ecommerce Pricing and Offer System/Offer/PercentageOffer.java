@@ -1,6 +1,6 @@
-package Flipkart.Offer;
+package Practice.LLD.LLDQuestions.Ecommerce.Offer;
 
-import Flipkart.Product;
+import Practice.LLD.LLDQuestions.Ecommerce.Product;
 
 import java.util.Set;
 

@@ -1,6 +1,6 @@
-package Flipkart.repository;
+package Practice.LLD.LLDQuestions.Ecommerce.repository;
 
-import Flipkart.Cart;
+import Practice.LLD.LLDQuestions.Ecommerce.Cart;
 
 import java.util.HashMap;
 import java.util.Map;

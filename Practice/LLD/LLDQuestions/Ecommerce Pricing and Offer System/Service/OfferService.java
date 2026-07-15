@@ -1,11 +1,11 @@
-package Flipkart.Service;
+package Practice.LLD.LLDQuestions.Ecommerce.Service;
 
-import Flipkart.Enum.OfferType;
-import Flipkart.Offer.FlatOffer;
-import Flipkart.Offer.Offer;
-import Flipkart.Offer.PercentageOffer;
-import Flipkart.repository.OfferRepository;
-import Flipkart.repository.ProductRepository;
+import Practice.LLD.LLDQuestions.Ecommerce.Enum.OfferType;
+import Practice.LLD.LLDQuestions.Ecommerce.Offer.FlatOffer;
+import Practice.LLD.LLDQuestions.Ecommerce.Offer.Offer;
+import Practice.LLD.LLDQuestions.Ecommerce.Offer.PercentageOffer;
+import Practice.LLD.LLDQuestions.Ecommerce.repository.OfferRepository;
+import Practice.LLD.LLDQuestions.Ecommerce.repository.ProductRepository;
 
 import java.util.Set;
 

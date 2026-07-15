@@ -1,13 +1,13 @@
-package Flipkart;
+package Practice.LLD.LLDQuestions.Ecommerce;
 
-import Flipkart.Enum.OfferType;
-import Flipkart.Service.CartService;
-import Flipkart.Service.EvaluateCartService;
-import Flipkart.Service.OfferService;
-import Flipkart.Service.ProductService;
-import Flipkart.repository.CartRepository;
-import Flipkart.repository.OfferRepository;
-import Flipkart.repository.ProductRepository;
+import Practice.LLD.LLDQuestions.Ecommerce.Enum.OfferType;
+import Practice.LLD.LLDQuestions.Ecommerce.Service.CartService;
+import Practice.LLD.LLDQuestions.Ecommerce.Service.EvaluateCartService;
+import Practice.LLD.LLDQuestions.Ecommerce.Service.OfferService;
+import Practice.LLD.LLDQuestions.Ecommerce.Service.ProductService;
+import Practice.LLD.LLDQuestions.Ecommerce.repository.CartRepository;
+import Practice.LLD.LLDQuestions.Ecommerce.repository.OfferRepository;
+import Practice.LLD.LLDQuestions.Ecommerce.repository.ProductRepository;
 
 import java.util.Set;
 

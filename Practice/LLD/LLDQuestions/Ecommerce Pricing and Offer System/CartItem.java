@@ -1,4 +1,4 @@
-package Flipkart;
+package Practice.LLD.LLDQuestions.Ecommerce;
 
 public class CartItem {
     private final Product product;

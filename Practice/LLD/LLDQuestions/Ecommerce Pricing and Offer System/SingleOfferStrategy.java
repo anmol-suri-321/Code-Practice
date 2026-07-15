@@ -1,6 +1,6 @@
-package Flipkart;
+package Practice.LLD.LLDQuestions.Ecommerce;
 
-import Flipkart.Offer.Offer;
+import Practice.LLD.LLDQuestions.Ecommerce.Offer.Offer;
 
 import java.util.List;
 

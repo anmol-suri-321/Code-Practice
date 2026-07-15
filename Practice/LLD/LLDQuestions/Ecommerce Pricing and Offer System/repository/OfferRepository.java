@@ -1,7 +1,7 @@
-package Flipkart.repository;
+package Practice.LLD.LLDQuestions.Ecommerce.repository;
 
-import Flipkart.Offer.Offer;
-import Flipkart.Product;
+import Practice.LLD.LLDQuestions.Ecommerce.Offer.Offer;
+import Practice.LLD.LLDQuestions.Ecommerce.Product;
 
 import java.util.*;
 

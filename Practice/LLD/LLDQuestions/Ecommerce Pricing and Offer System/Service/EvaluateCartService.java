@@ -1,10 +1,10 @@
-package Flipkart.Service;
+package Practice.LLD.LLDQuestions.Ecommerce.Service;
 
-import Flipkart.Cart;
-import Flipkart.CartItem;
-import Flipkart.Offer.Offer;
-import Flipkart.SingleOfferStrategy;
-import Flipkart.repository.OfferRepository;
+import Practice.LLD.LLDQuestions.Ecommerce.Cart;
+import Practice.LLD.LLDQuestions.Ecommerce.CartItem;
+import Practice.LLD.LLDQuestions.Ecommerce.Offer.Offer;
+import Practice.LLD.LLDQuestions.Ecommerce.SingleOfferStrategy;
+import Practice.LLD.LLDQuestions.Ecommerce.repository.OfferRepository;
 
 import java.util.List;
 

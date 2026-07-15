@@ -1,7 +1,7 @@
-package Flipkart.Service;
+package Practice.LLD.LLDQuestions.Ecommerce.Service;
 
-import Flipkart.Product;
-import Flipkart.repository.ProductRepository;
+import Practice.LLD.LLDQuestions.Ecommerce.Product;
+import Practice.LLD.LLDQuestions.Ecommerce.repository.ProductRepository;
 
 public class ProductService {
     private final ProductRepository productRepository;
