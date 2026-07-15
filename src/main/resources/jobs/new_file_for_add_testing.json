@@ -1,0 +1,9 @@
+{
+  "job_id": "cleanup-xyz",
+  "description": "Perform a one-time cleanup of temporary files.",
+  "schedule": "2026-07-15T11:29:54Z",
+  "task": {
+    "type": "execute_command",
+    "command": "echo 'This new job file is added again for testing'"
+  }
+}

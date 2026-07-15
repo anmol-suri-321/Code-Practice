@@ -1,0 +1,9 @@
+{
+  "job_id": "heartbeat-001",
+  "description": "Health check that runs every minute.",
+  "schedule": "*/3 * * * *",
+  "task": {
+    "type": "execute_command",
+    "command": "echo 'ChronoFlow heartbeat OK'"
+  }
+}

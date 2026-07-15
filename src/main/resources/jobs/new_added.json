@@ -1,0 +1,9 @@
+{
+  "job_id": "1234",
+  "description": "Generate the daily sales report.",
+  "schedule": "0 1 * * *",
+  "task": {
+    "type": "execute_command",
+    "command": "echo 'Hello world'"
+  }
+}
